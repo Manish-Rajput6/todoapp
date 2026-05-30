@@ -15,30 +15,24 @@ app.get("/todos", (req, res) => {
 
 // POST Todo
 app.post("/todos", (req, res) => {
-
   const todo = {
     id: Date.now(),
     text: req.body.text,
     title: req.body.title,
     description: req.body.description,
     status: req.body.status,
-    priority:req.body.priority,
+    priority: req.body.priority,
   };
 
   todos.push(todo);
-
   res.json(todo);
 });
 
 // DELETE Todo
 app.delete("/todos/:id", (req, res) => {
-
   const id = Number(req.params.id);
-
   todos = todos.filter(todo => todo.id !== id);
-
   res.json({ message: "Todo Deleted" });
-
 });
 
 app.listen(5000, () => {
