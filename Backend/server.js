@@ -8,12 +8,12 @@ app.use(express.json());
 
 let todos = [];
 
-// GET Todos
+// GET
 app.get("/todos", (req, res) => {
   res.json(todos);
 });
 
-// POST Todo
+// POST
 app.post("/todos", (req, res) => {
   const todo = {
     id: Date.now(),
@@ -28,13 +28,37 @@ app.post("/todos", (req, res) => {
   res.json(todo);
 });
 
-// DELETE Todo
+// PUT (UPDATE) ✅ FIXED
+app.put("/todos/:id", (req, res) => {
+  const id = Number(req.params.id);
+
+  const index = todos.findIndex((t) => t.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ message: "Todo not found" });
+  }
+
+  todos[index] = {
+    ...todos[index],
+    text: req.body.text,
+    title: req.body.title,
+    description: req.body.description,
+    status: req.body.status,
+    priority: req.body.priority,
+  };
+
+  res.json(todos[index]);
+});
+
+// DELETE
 app.delete("/todos/:id", (req, res) => {
   const id = Number(req.params.id);
-  todos = todos.filter(todo => todo.id !== id);
-  res.json({ message: "Todo Deleted" });
+
+  todos = todos.filter((t) => t.id !== id);
+
+  res.json({ message: "Deleted" });
 });
 
 app.listen(5000, () => {
-  console.log("Server running on port 5000");
+  console.log("Server running on 5000");
 });

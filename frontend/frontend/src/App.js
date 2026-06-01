@@ -3,62 +3,113 @@ import axios from "axios";
 import "./App.css";
 
 function App() {
-
   const [todos, setTodos] = useState([]);
 
-  // States
   const [text, setText] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [ status, setStatus] = useState("");
-  const[priority,setpriority]=useState("");
+  const [status, setStatus] = useState("");
+  const [priority, setPriority] = useState("");
+
+  const [editingId, setEditingId] = useState(null);
 
   // Fetch Todos
   const fetchTodos = async () => {
-    const res = await axios.get("http://localhost:5000/todos");
-    setTodos(res.data);
+    try {
+      const res = await axios.get("http://localhost:5000/todos");
+      setTodos(res.data);
+    } catch (error) {
+      console.error("Fetch Error:", error);
+    }
   };
 
   useEffect(() => {
     fetchTodos();
   }, []);
 
-  // Add Todo
-  const addTodo = async () => {
-
-    if (!title || !description || !status||!priority) return;
-
-    await axios.post("http://localhost:5000/todos", {
-      text,
-      title,
-      description,
-      status,
-      priority,
-    });
-
-    // Clear Inputs
+  // Clear Form
+  const clearForm = () => {
     setText("");
     setTitle("");
     setDescription("");
     setStatus("");
-    setpriority("");
-
-    fetchTodos();
+    setPriority("");
   };
 
+  // Add Todo
+  const addTodo = async () => {
+    try {
+      if (!text || !title || !description || !status || !priority) {
+        alert("Please fill all fields");
+        return;
+      }
+
+      await axios.post("http://localhost:5000/todos", {
+        text,
+        title,
+        description,
+        status,
+        priority,
+      });
+
+      clearForm();
+      fetchTodos();
+    } catch (error) {
+      console.error("Add Error:", error);
+    }
+  };
+
+  // Edit Todo
+  const editTodo = (todo) => {
+    setEditingId(todo.id);
+
+    setText(todo.text);
+    setTitle(todo.title);
+    setDescription(todo.description);
+    setStatus(todo.status);
+    setPriority(todo.priority);
+  };
+
+  // Update Todo
+ const updateTodo = async () => {
+  console.log("editingId =", editingId);
+
+  try {
+    const res = await axios.put(
+      `http://localhost:5000/todos/${editingId}`,
+      {
+        text,
+        title,
+        description,
+        status,
+        priority,
+      }
+    );
+
+    console.log("Updated:", res.data);
+
+    fetchTodos();
+    clearForm();
+    setEditingId(null);
+  } catch (error) {
+    console.error(error);
+  }
+};
   // Delete Todo
   const deleteTodo = async (id) => {
-    await axios.delete(`http://localhost:5000/todos/${id}`);
-    fetchTodos();
+    try {
+      await axios.delete(`http://localhost:5000/todos/${id}`);
+      fetchTodos();
+    } catch (error) {
+      console.error("Delete Error:", error);
+    }
   };
 
   return (
     <div className="container">
-
       <h1>Todo App</h1>
 
       <div className="input-box">
-
         <input
           type="text"
           placeholder="Enter Todo"
@@ -79,73 +130,80 @@ function App() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
-<select
-placeholder="select Status"
-onChange={(e)=> setStatus(e.target.value)}
-       >
-        <option value ="">select Status</option>
-        <option value="open">open</option>
-        <option  value="close">close</option>
 
-</select>
-
-<select
-        placeholder="Enter output time"
-        onChange={(e)=> setpriority(e.target.value)}
+        <select
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
         >
-<option value="">select priority</option>
-<option value="High">High</option>
-<option value="low">low</option>
-<option value="medium">low </option>
+          <option value="">Select Status</option>
+          <option value="open">Open</option>
+          <option value="close">Close</option>
+        </select>
 
-</select>
-                                                   
+        <select
+          value={priority}
+          onChange={(e) => setPriority(e.target.value)}
+        >
+          <option value="">Select Priority</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
 
-        <button onClick={addTodo}>
-          Add
-        </button>
-
+        {editingId ? (
+          <button onClick={updateTodo}>Update</button>
+        ) : (
+          <button onClick={addTodo}>Add</button>
+        )}
       </div>
 
-      <table border="1">
+      <br />
 
+      <table border="1" cellPadding="10">
         <thead>
           <tr>
             <th>Todo</th>
             <th>Title</th>
             <th>Description</th>
             <th>Status</th>
-            <th>priority</th>
+            <th>Priority</th>
             <th>Action</th>
           </tr>
         </thead>
 
         <tbody>
+          {todos.length > 0 ? (
+            todos.map((todo) => (
+              <tr key={todo.id}>
+                <td>{todo.text}</td>
+                <td>{todo.title}</td>
+                <td>{todo.description}</td>
+                <td>{todo.status}</td>
+                <td>{todo.priority}</td>
 
-          {todos.map((todo) => (
+                <td>
+                  <button
+                    onClick={() => editTodo(todo)}
+                  >
+                    Edit
+                  </button>
 
-            <tr key={todo.id}>
-
-              <td>{todo.text}</td>
-              <td>{todo.title}</td>
-              <td>{todo.description}</td>
-              <td>{todo.status}</td>
-              <td>{todo.priority}</td>
-
-              <td>
-                <button onClick={() => deleteTodo(todo.id)}>
-                  Delete
-                </button>
-              </td>
-
+                  <button
+                    onClick={() => deleteTodo(todo.id)}
+                    style={{ marginLeft: "10px" }}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan="6">No Todos Found</td>
             </tr>
-
-          ))}
-
+          )}
         </tbody>
-
       </table>
-
     </div>
   );
 }
